@@ -1,78 +1,61 @@
-"""News facade — merges multi-source, dedupes by URL, persists, returns window."""
+"""News facade — fetches via RSS, dedupes by URL hash, persists to SQLite.
+
+Phase 1 uses RSS only. Finnhub/NewsData were removed because Finnhub's free
+tier doesn't cover Indian stocks and NewsData added little incremental value.
+Both can be re-added in Phase 2 when we have paid plans / wider coverage.
+"""
 
 from __future__ import annotations
 
-import asyncio
-import hashlib
-
 from stockanalyser.providers.base import NewsArticleDTO
-from stockanalyser.providers.news.finnhub_provider import FinnhubNewsProvider
-from stockanalyser.providers.news.newsdata_provider import NewsDataProvider
 from stockanalyser.providers.news.rss_provider import RssNewsProvider
 from stockanalyser.storage.models import NewsArticle
 from stockanalyser.storage.repositories import recent_news, upsert_news
+from stockanalyser.utils.hashing import stable_hash
 from stockanalyser.utils.logging import get_logger
 
 log = get_logger(__name__)
 
 
+def _dto_to_orm(d: NewsArticleDTO) -> NewsArticle:
+    return NewsArticle(
+        id=stable_hash(d.url),
+        symbol=d.symbol,
+        source=d.source,
+        title=d.title,
+        url=d.url,
+        summary=d.summary,
+        published_at=d.published_at,
+    )
+
+
+def _orm_to_dto(r: NewsArticle) -> NewsArticleDTO:
+    return NewsArticleDTO(
+        symbol=r.symbol,
+        source=r.source,
+        title=r.title,
+        url=r.url,
+        summary=r.summary,
+        published_at=r.published_at,
+    )
+
+
 class NewsFacade:
-    def __init__(
-        self,
-        finnhub: FinnhubNewsProvider | None = None,
-        rss: RssNewsProvider | None = None,
-        newsdata: NewsDataProvider | None = None,
-    ) -> None:
-        self.finnhub = finnhub or FinnhubNewsProvider()
+    def __init__(self, rss: RssNewsProvider | None = None) -> None:
         self.rss = rss or RssNewsProvider()
-        self.newsdata = newsdata or NewsDataProvider()
 
-    async def refresh_and_get(self, symbol: str, days: int = 7) -> list[NewsArticleDTO]:
-        # Fetch from primary sources in parallel
-        results = await asyncio.gather(
-            self.finnhub.fetch(symbol, days),
-            self.rss.fetch(symbol, days),
-            return_exceptions=True,
-        )
-        articles: list[NewsArticleDTO] = []
-        for res in results:
-            if isinstance(res, Exception):
-                log.warning("news_source_failed", error=str(res))
-                continue
-            articles.extend(res)
+    async def get_recent_news(self, symbol: str, days: int = 7) -> list[NewsArticleDTO]:
+        """Fetch fresh articles, persist (dedupe by URL hash), return last N days."""
+        try:
+            fetched = await self.rss.fetch(symbol, days)
+        except Exception as e:  # noqa: BLE001
+            log.warning("rss_fetch_failed", symbol=symbol, error=str(e))
+            fetched = []
 
-        # Fallback if everything else is empty
-        if not articles:
-            try:
-                articles = await self.newsdata.fetch(symbol, days)
-            except Exception as e:  # noqa: BLE001
-                log.warning("newsdata_fallback_failed", error=str(e))
+        if fetched:
+            inserted = upsert_news([_dto_to_orm(a) for a in fetched])
+            log.info("news_persisted", symbol=symbol, fetched=len(fetched), inserted=inserted)
 
-        # Persist (dedupe by URL hash via PK)
-        upsert_news([self._to_row(a) for a in articles if a.url])
-
-        # Return what's in the DB (canonical 7-day window)
+        # Always read from SQLite so we benefit from prior runs' dedupe + retention.
         rows = recent_news(symbol, days=days)
-        return [
-            NewsArticleDTO(
-                symbol=r.symbol,
-                source=r.source,
-                title=r.title,
-                url=r.url,
-                summary=r.summary,
-                published_at=r.published_at,
-            )
-            for r in rows
-        ]
-
-    @staticmethod
-    def _to_row(a: NewsArticleDTO) -> NewsArticle:
-        return NewsArticle(
-            id=hashlib.sha256(a.url.encode("utf-8")).hexdigest(),
-            symbol=a.symbol,
-            source=a.source,
-            title=a.title,
-            url=a.url,
-            summary=a.summary,
-            published_at=a.published_at,
-        )
+        return [_orm_to_dto(r) for r in rows]

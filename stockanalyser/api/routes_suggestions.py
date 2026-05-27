@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from stockanalyser.storage.repositories import latest_suggestions, suggestions_for
+from stockanalyser.storage.repositories import (
+    latest_suggestion_per_symbol,
+    latest_suggestions,
+    suggestions_for,
+)
 
 router = APIRouter(tags=["suggestions"])
 
@@ -25,10 +29,13 @@ def _row_to_dict(r: object) -> dict[str, object]:
 
 
 @router.get("/suggestions")
-def get_latest_suggestions(limit: int = 50) -> list[dict[str, object]]:
-    return [_row_to_dict(r) for r in latest_suggestions(limit=limit)]
+def get_latest_suggestions(history: bool = False, limit: int = 50) -> list[dict[str, object]]:
+    """Return the latest suggestion per stock (default) or full history if ?history=true."""
+    rows = latest_suggestions(limit=limit) if history else latest_suggestion_per_symbol()
+    return [_row_to_dict(r) for r in rows]
 
 
 @router.get("/suggestions/{symbol}")
 def get_history(symbol: str, limit: int = 30) -> list[dict[str, object]]:
+    """Full history for one stock (newest first)."""
     return [_row_to_dict(r) for r in suggestions_for(symbol.upper(), limit=limit)]

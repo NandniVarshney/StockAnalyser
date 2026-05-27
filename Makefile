@@ -80,6 +80,14 @@ api: ## Start FastAPI only (uvicorn --reload)
 run: ## Start Rovo CLI + FastAPI together
 	bash run.sh
 
+.PHONY: dashboard
+dashboard: ## Launch the Streamlit dashboard on :8501
+	$(VENV)/bin/streamlit run dashboard.py
+
+.PHONY: check-sources
+check-sources: ## Live-probe every data source and print pass/fail table
+	bash scripts/check_sources.sh
+
 .PHONY: health
 health: ## Ping :8766/health and :8000/health
 	bash run.sh health

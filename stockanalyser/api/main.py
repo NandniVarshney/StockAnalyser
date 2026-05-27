@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from stockanalyser import __version__
 from stockanalyser.api.routes_analyze import router as analyze_router
 from stockanalyser.api.routes_health import router as health_router
+from stockanalyser.api.routes_sources import router as sources_router
 from stockanalyser.api.routes_suggestions import router as suggestions_router
 from stockanalyser.api.routes_watchlist import router as watchlist_router
 from stockanalyser.config import load_watchlist
@@ -50,6 +51,7 @@ app = FastAPI(
 )
 
 app.include_router(health_router)
+app.include_router(sources_router)
 app.include_router(watchlist_router)
 app.include_router(analyze_router)
 app.include_router(suggestions_router)

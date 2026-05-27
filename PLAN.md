@@ -224,8 +224,8 @@ stockanalyser/
 │   └── aggregator.py
 ├── providers/        # Pluggable data sources
 │   ├── market/       # nselib_provider, nsepython_provider, yfinance_provider
-│   ├── fundamentals/ # screener_provider, yfinance_funda_provider
-│   └── news/         # finnhub_provider, rss_provider, newsdata_provider
+│   ├── fundamentals/ # screener_provider (only — sufficient for Indian stocks)
+│   └── news/         # rss_provider (Moneycontrol/ET/Livemint/BS)
 ├── storage/          # SQLite models + parquet helpers
 ├── scheduler/        # APScheduler jobs
 ├── config/           # pydantic-settings + YAML loaders
@@ -394,11 +394,8 @@ StockAnalyser/
 │   │   │   └── yfinance_provider.py      # fallback
 │   │   ├── fundamentals/
 │   │   │   ├── screener_provider.py
-│   │   │   └── yfinance_funda_provider.py
 │   │   └── news/
-│   │       ├── finnhub_provider.py
 │   │       ├── rss_provider.py
-│   │       └── newsdata_provider.py
 │   ├── storage/
 │   │   ├── db.py              # SQLAlchemy engine
 │   │   ├── models.py          # ORM tables
@@ -454,7 +451,7 @@ CREATE TABLE fundamentals_cache (
 CREATE TABLE news_articles (
   id            TEXT PRIMARY KEY,        -- hash of url
   symbol        TEXT NOT NULL,
-  source        TEXT NOT NULL,           -- 'finnhub' | 'moneycontrol_rss' | 'newsdata'
+  source        TEXT NOT NULL,           -- 'moneycontrol' | 'economic_times' | 'livemint' | 'business_std'
   title         TEXT NOT NULL,
   url           TEXT NOT NULL,
   summary       TEXT,
@@ -523,8 +520,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     # Secrets / API keys
-    finnhub_api_key: str | None = None
-    newsdata_api_key: str | None = None
+    # Phase 1 has no required API keys — all sources are free + key-less.
 
     # Storage
     sqlite_path: str = "db/stockanalyser.db"
@@ -594,8 +590,7 @@ fundamentals:
   primary: screener
   sanity: yfinance
 news:
-  primary: [finnhub, rss]
-  fallback: newsdata
+  primary: [rss]
 ```
 
 ---
@@ -667,7 +662,7 @@ Swagger UI available automatically at `/docs`.
 ### Sprint 1 — Data Providers (Day 3–5)
 - Implement `MarketDataProvider` abstract + `nselib_provider`, `nsepython_provider`, `yfinance_provider` (fallback).
 - Implement `FundamentalsProvider` + `screener_provider`.
-- Implement `NewsProvider` + `finnhub_provider`, `rss_provider`.
+- Implement `NewsProvider` + `rss_provider` (Moneycontrol / ET / Livemint / BS).
 - Persist OHLCV → Parquet; fundamentals + news → SQLite.
 - Unit tests with `respx` mocks; integration test fetching `RELIANCE`.
 - **Exit criteria:** `python -m stockanalyser fetch RELIANCE` populates DB + parquet.
@@ -766,8 +761,6 @@ Swagger UI available automatically at `/docs`.
 - Tijori Finance — https://www.tijorifinance.com/
 
 **News**
-- Finnhub — https://finnhub.io/docs/api
-- NewsData.io — https://newsdata.io/
 - Moneycontrol RSS — https://www.moneycontrol.com/rss/
 - Economic Times RSS — https://economictimes.indiatimes.com/rss.cms
 - MarketAux — https://www.marketaux.com/

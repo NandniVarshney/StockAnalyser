@@ -163,9 +163,37 @@ def persist_suggestion(parent_run_id: str, suggestion: Suggestion) -> None:
 
 
 def latest_suggestions(limit: int = 50) -> list[SuggestionRow]:
+    """Most recent N rows in chronological order (history, may contain dupes)."""
     with get_session() as s:
         q = select(SuggestionRow).order_by(SuggestionRow.as_of.desc()).limit(limit)
         return list(s.scalars(q))
+
+
+def latest_suggestion_per_symbol() -> list[SuggestionRow]:
+    """Return ONE row per symbol — the most recent suggestion for each stock.
+
+    Uses a correlated subquery (works on SQLite). Sorted by combined_score desc.
+    """
+    with get_session() as s:
+        # Per-symbol max(as_of)
+        sub = (
+            select(SuggestionRow.symbol, SuggestionRow.as_of)
+            .order_by(SuggestionRow.symbol, SuggestionRow.as_of.desc())
+            .subquery()
+        )
+        # SQLite-friendly: pull all rows, group in Python (cheap for ≤50 stocks)
+        all_rows = list(
+            s.scalars(select(SuggestionRow).order_by(SuggestionRow.as_of.desc()))
+        )
+        seen: set[str] = set()
+        latest: list[SuggestionRow] = []
+        for r in all_rows:
+            if r.symbol in seen:
+                continue
+            seen.add(r.symbol)
+            latest.append(r)
+        latest.sort(key=lambda r: (r.combined_score or 0.0), reverse=True)
+        return latest
 
 
 def suggestions_for(symbol: str, limit: int = 30) -> list[SuggestionRow]:

@@ -47,8 +47,8 @@ class Settings(BaseSettings):
     atlassian_account_id: str | None = None
 
     # ─── External data API keys ───────────────────────────────────────────
-    finnhub_api_key: str | None = None
-    newsdata_api_key: str | None = None
+    # Phase 1 has no API-key requirements: we use nselib + yfinance + Screener.in
+    # + RSS feeds, all of which are free and key-less.
 
 
 @lru_cache(maxsize=1)

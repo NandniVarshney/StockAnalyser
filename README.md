@@ -97,8 +97,6 @@ $EDITOR .env
 | `ROVODEV_SERVE_PORT` | `8766` | Local Rovo Dev CLI port |
 | `APP_PORT` | `8000` | FastAPI port |
 | `LOG_LEVEL` | `INFO` | `DEBUG` is much chattier |
-| `FINNHUB_API_KEY` | _empty_ | Optional. Free 60 req/min at https://finnhub.io. RSS works without it. |
-| `NEWSDATA_API_KEY` | _empty_ | Optional fallback |
 | `AGGREGATOR_USE_LLM_REASONING` | `false` | Set true to use the optional polish skill |
 
 ### 4. Start the stack (two terminals)
@@ -298,7 +296,7 @@ StockAnalyser/
 │   ├── providers/
 │   │   ├── market/               nselib + yfinance + cache facade
 │   │   ├── fundamentals/         screener + yfinance + cache facade
-│   │   └── news/                 finnhub + rss + newsdata + dedupe facade
+│   │   └── news/                 rss (Moneycontrol/ET/Livemint/BS) + dedupe facade
 │   ├── orchestrator/             pipeline · indicators · sector_stats
 │   ├── scheduler/                APScheduler jobs (cron in IST)
 │   └── api/                      FastAPI routes
@@ -371,7 +369,8 @@ the first to finish. The orchestrator already serialises the 3 agent calls withi
 one analysis.
 
 ### `Finnhub api key missing` warning
-Optional. Get a free key at https://finnhub.io and set `FINNHUB_API_KEY` in `.env`.
+Phase 1 uses only RSS feeds for news (Finnhub free tier doesn't cover Indian stocks).
+No API key needed.
 RSS feeds give you Indian news without it.
 
 ### Screener.in scraper returns empty

@@ -43,6 +43,9 @@ dependencies = [
 
     # Logging
     "structlog>=24.4",
+
+    # Optional UI (dashboard.py)
+    "streamlit>=1.36",
 ]
 
 [project.optional-dependencies]

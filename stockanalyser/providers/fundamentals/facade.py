@@ -1,4 +1,4 @@
-"""Cache-aware fundamentals facade — Screener primary, yfinance sanity-check."""
+"""Cache-aware fundamentals facade — Screener.in only (Phase 1)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,6 @@ import json
 
 from stockanalyser.providers.base import FundamentalsDTO
 from stockanalyser.providers.fundamentals.screener_provider import ScreenerProvider
-from stockanalyser.providers.fundamentals.yfinance_funda_provider import YFinanceFundamentalsProvider
 from stockanalyser.storage.models import FundamentalsCache
 from stockanalyser.storage.repositories import get_fresh_fundamentals, upsert_fundamentals
 from stockanalyser.utils.logging import get_logger
@@ -15,13 +14,8 @@ log = get_logger(__name__)
 
 
 class FundamentalsFacade:
-    def __init__(
-        self,
-        primary: ScreenerProvider | None = None,
-        sanity: YFinanceFundamentalsProvider | None = None,
-    ) -> None:
+    def __init__(self, primary: ScreenerProvider | None = None) -> None:
         self.primary = primary or ScreenerProvider()
-        self.sanity = sanity or YFinanceFundamentalsProvider()
 
     async def get(self, symbol: str) -> FundamentalsDTO:
         """Return cached row if <24h old, else fetch + persist."""
@@ -29,12 +23,7 @@ class FundamentalsFacade:
         if cached is not None:
             return self._row_to_dto(cached)
 
-        try:
-            dto = await self.primary.fetch(symbol)
-        except Exception as e:  # noqa: BLE001
-            log.warning("fundamentals_primary_failed", symbol=symbol, error=str(e))
-            dto = await self.sanity.fetch(symbol)
-
+        dto = await self.primary.fetch(symbol)
         upsert_fundamentals(self._dto_to_row(dto))
         return dto
 

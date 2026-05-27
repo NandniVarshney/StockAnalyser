@@ -5,12 +5,10 @@ market_data:
   fallback: yfinance
 
 fundamentals:
-  primary: screener
-  sanity:  yfinance       # cross-check P/E only
+  primary: screener       # only source needed for Indian fundamentals
 
 news:
-  primary:  [finnhub, rss]
-  fallback: newsdata
+  primary: [rss]          # RSS-only in Phase 1 (free, Indian-stock friendly)
 
 rss_feeds:
   - { source: moneycontrol,    url: "https://www.moneycontrol.com/rss/marketreports.xml" }

@@ -20,7 +20,7 @@ You analyse the last 7 days of news for one Indian NSE stock and produce a senti
       "title": "...",
       "url": "...",
       "summary": "...",
-      "source": "moneycontrol | economic_times | livemint | business_std | finnhub | newsdata",
+      "source": "moneycontrol | economic_times | livemint | business_std",
       "published_at": "2026-05-25T10:30:00"
     }
   ]
