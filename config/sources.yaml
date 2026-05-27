@@ -1,0 +1,19 @@
+# ─── StockAnalyser — data source routing ──────────────────────────────────
+# Which provider is primary per data type. Swappable in Phase 2.
+market_data:
+  primary:  nselib       # daily only (swing mode)
+  fallback: yfinance
+
+fundamentals:
+  primary: screener
+  sanity:  yfinance       # cross-check P/E only
+
+news:
+  primary:  [finnhub, rss]
+  fallback: newsdata
+
+rss_feeds:
+  - { source: moneycontrol,    url: "https://www.moneycontrol.com/rss/marketreports.xml" }
+  - { source: economic_times,  url: "https://economictimes.indiatimes.com/markets/stocks/rssfeeds/2146842.cms" }
+  - { source: livemint,        url: "https://www.livemint.com/rss/markets" }
+  - { source: business_std,    url: "https://www.business-standard.com/rss/markets-106.rss" }

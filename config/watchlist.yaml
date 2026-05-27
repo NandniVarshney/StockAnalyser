@@ -1,0 +1,18 @@
+# ─── StockAnalyser — watchlist (Nifty subset) ──────────────────────────────
+# Edit freely. Symbols are NSE tickers (no .NS suffix here — providers add it).
+stocks:
+  - { symbol: RELIANCE,   name: "Reliance Industries",     sector: Energy }
+  - { symbol: TCS,        name: "Tata Consultancy",        sector: IT }
+  - { symbol: INFY,       name: "Infosys",                 sector: IT }
+  - { symbol: HDFCBANK,   name: "HDFC Bank",               sector: Banking }
+  - { symbol: ICICIBANK,  name: "ICICI Bank",              sector: Banking }
+  - { symbol: ITC,        name: "ITC",                     sector: FMCG }
+  - { symbol: LT,         name: "Larsen & Toubro",         sector: Infra }
+  - { symbol: SBIN,       name: "State Bank of India",     sector: Banking }
+  - { symbol: BHARTIARTL, name: "Bharti Airtel",           sector: Telecom }
+  - { symbol: HINDUNILVR, name: "Hindustan Unilever",      sector: FMCG }
+  - { symbol: AXISBANK,   name: "Axis Bank",               sector: Banking }
+  - { symbol: KOTAKBANK,  name: "Kotak Mahindra Bank",     sector: Banking }
+  - { symbol: MARUTI,     name: "Maruti Suzuki",           sector: Auto }
+  - { symbol: ASIANPAINT, name: "Asian Paints",            sector: Materials }
+  - { symbol: SUNPHARMA,  name: "Sun Pharma",              sector: Pharma }

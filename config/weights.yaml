@@ -1,0 +1,16 @@
+# ─── StockAnalyser — aggregator weights & thresholds ──────────────────────
+# combined_score = weights.technical * TA.score + weights.fundamental * FA.score
+# Must sum to 1.0 (validated on load).
+weights:
+  technical:   0.4
+  fundamental: 0.6
+
+# combined_score → signal
+thresholds:
+  buy:  70    # >= 70 → BUY
+  sell: 40    # <  40 → SELL ; 40..69 → HOLD
+
+# news_score (kept separate)
+news_thresholds:
+  positive: 60
+  negative: 40
